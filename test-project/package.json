@@ -1,0 +1,14 @@
+{
+  "name": "test-web3-app",
+  "version": "1.0.0",
+  "dependencies": {
+    "@web3modal/wagmi": "^3.5.7",
+    "@web3modal/siwe": "^3.5.7",
+    "wagmi": "^1.4.12",
+    "viem": "^1.19.11",
+    "react": "^18.0.0"
+  },
+  "devDependencies": {
+    "typescript": "^5.0.0"
+  }
+}

@@ -1,0 +1,9 @@
+{
+  "mcpServers": {
+    "reown-para-migration": {
+      "command": "node",
+      "args": ["/home/scarf/frutero/mcp/dist/index.js"],
+      "env": {}
+    }
+  }
+}
