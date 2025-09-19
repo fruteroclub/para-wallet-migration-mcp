@@ -52,8 +52,8 @@ Automatically migrate from **ReOwn/WalletConnect**, **Privy**, and other wallet 
 
 ### **Installation**
 ```bash
-git clone https://github.com/your-username/mcp-wallet-migration
-cd mcp-wallet-migration
+git clone https://github.com/fruteroclub/Para-wallet-migration-mcp.git
+cd Para-wallet-migration-mcp
 npm install
 npm run build
 ```
@@ -377,7 +377,7 @@ We welcome contributions! Here's how to help:
 
 ```bash
 # Development setup:
-git clone https://github.com/your-username/mcp-wallet-migration
+git clone https://github.com/fruteroclub/Para-wallet-migration-mcp.git
 cd mcp-wallet-migration
 npm install
 npm run dev
@@ -398,8 +398,8 @@ MIT License - see [LICENSE](LICENSE) file for details.
 ## 🆘 Support & Community
 
 ### **Get Help**
-- 🐛 **Bug Reports:** [GitHub Issues](https://github.com/your-username/mcp-wallet-migration/issues)
-- 💡 **Feature Requests:** [GitHub Discussions](https://github.com/your-username/mcp-wallet-migration/discussions)
+- 🐛 **Bug Reports:** [GitHub Issues](https://github.com/fruteroclub/Para-wallet-migration-mcp/issues)
+- 💡 **Feature Requests:** [GitHub Discussions](https://github.com/fruteroclub/Para-wallet-migration-mcp/discussions)
 - 📖 **Documentation:** This README + inline code comments
 
 ### **Professional Support**
