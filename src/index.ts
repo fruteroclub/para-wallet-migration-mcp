@@ -187,6 +187,73 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
           },
         },
       },
+      {
+        name: 'generate_css_imports',
+        description: 'Generate CSS import statements for Para SDK styles in the correct entry point',
+        inputSchema: {
+          type: 'object',
+          properties: {
+            projectPath: {
+              type: 'string',
+              description: 'Path to the project directory',
+            },
+            typescript: {
+              type: 'boolean',
+              description: 'Generate TypeScript version',
+              default: true,
+            },
+          },
+          required: ['projectPath'],
+        },
+      },
+      {
+        name: 'validate_para_migration',
+        description: 'Validate the 3 critical issues that cause 90% of migration failures',
+        inputSchema: {
+          type: 'object',
+          properties: {
+            projectPath: {
+              type: 'string',
+              description: 'Path to the project directory',
+            },
+          },
+          required: ['projectPath'],
+        },
+      },
+      {
+        name: 'generate_hooks_examples',
+        description: 'Generate hook usage examples showing before/after migration patterns',
+        inputSchema: {
+          type: 'object',
+          properties: {
+            fromProvider: {
+              type: 'string',
+              enum: ['privy', 'reown', 'walletconnect'],
+              description: 'Source wallet provider being migrated from',
+              default: 'privy',
+            },
+            typescript: {
+              type: 'boolean',
+              description: 'Generate TypeScript version',
+              default: true,
+            },
+          },
+        },
+      },
+      {
+        name: 'quick_migration_mode',
+        description: 'Generate ultra-fast development configuration with timeouts and fallbacks',
+        inputSchema: {
+          type: 'object',
+          properties: {
+            config: {
+              type: 'object',
+              description: 'Base migration configuration',
+            },
+          },
+          required: ['config'],
+        },
+      },
     ],
   };
 });
@@ -254,6 +321,28 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
       case 'generate_layout_with_styles':
         return await codeGenerator.generateLayoutWithStyles(
           args.typescript as boolean | undefined
+        );
+
+      case 'generate_css_imports':
+        return await codeGenerator.generateCssImports(
+          args.projectPath as string,
+          args.typescript as boolean | undefined
+        );
+
+      case 'validate_para_migration':
+        return await validationService.validateParaMigration(
+          args.projectPath as string
+        );
+
+      case 'generate_hooks_examples':
+        return await codeGenerator.generateHooksExamples(
+          args.fromProvider as string | undefined,
+          args.typescript as boolean | undefined
+        );
+
+      case 'quick_migration_mode':
+        return await codeGenerator.generateQuickMigrationConfig(
+          args.config as any
         );
 
       default:

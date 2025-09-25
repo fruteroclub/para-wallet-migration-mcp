@@ -409,4 +409,272 @@ export class ValidationService {
     const compatible = compatibility.wagmiHooks.compatible;
     return Math.round((compatible / total) * 100);
   }
+
+  async validateParaMigration(projectPath: string): Promise<any> {
+    const { promises: fs } = await import('fs');
+    const path = await import('path');
+    
+    const issues: string[] = [];
+    const validationResults = {
+      paraModalCheck: { status: 'unknown', details: '' },
+      cssImportCheck: { status: 'unknown', details: '' },
+      environmentEnumCheck: { status: 'unknown', details: '' },
+      overallStatus: 'unknown',
+    };
+
+    try {
+      // Check 1: ParaModal component in provider files
+      const providerFiles = await this.findProviderFiles(projectPath);
+      let hasParaModalInProvider = false;
+      let paraProviderFound = false;
+
+      for (const file of providerFiles) {
+        try {
+          const content = await fs.readFile(file, 'utf-8');
+          
+          if (content.includes('ParaProvider') || content.includes('<ParaProvider')) {
+            paraProviderFound = true;
+            
+            if (content.includes('<ParaModal') || content.includes('ParaModal />')) {
+              hasParaModalInProvider = true;
+              validationResults.paraModalCheck = {
+                status: 'pass',
+                details: `✅ Found <ParaModal /> in ${path.relative(projectPath, file)}`
+              };
+              break;
+            }
+          }
+        } catch (error) {
+          // Skip files we can't read
+        }
+      }
+
+      if (!hasParaModalInProvider) {
+        if (paraProviderFound) {
+          issues.push('❌ CRITICAL ISSUE #1: <ParaModal /> missing in ParaProvider');
+          validationResults.paraModalCheck = {
+            status: 'fail',
+            details: '❌ CRITICAL: <ParaModal /> component missing in provider - modal will not appear'
+          };
+        } else {
+          issues.push('❌ CRITICAL ISSUE #1: ParaProvider not found in project');
+          validationResults.paraModalCheck = {
+            status: 'fail',
+            details: '❌ CRITICAL: ParaProvider not found - please generate provider component first'
+          };
+        }
+      }
+
+      // Check 2: CSS imports in main entry points
+      const entryPoints = [
+        'src/main.tsx', 'src/main.ts', 'src/index.tsx', 'src/index.ts',
+        'app/layout.tsx', 'app/layout.ts', 'pages/_app.tsx', 'pages/_app.ts'
+      ];
+
+      let hasParaCSSImport = false;
+      let foundEntryPoints: string[] = [];
+
+      for (const entryPoint of entryPoints) {
+        const fullPath = path.join(projectPath, entryPoint);
+        try {
+          await fs.access(fullPath);
+          foundEntryPoints.push(entryPoint);
+          
+          const content = await fs.readFile(fullPath, 'utf-8');
+          if (content.includes('@getpara/react-sdk/styles.css')) {
+            hasParaCSSImport = true;
+            validationResults.cssImportCheck = {
+              status: 'pass',
+              details: `✅ Found Para SDK CSS import in ${entryPoint}`
+            };
+            break;
+          }
+        } catch {
+          continue;
+        }
+      }
+
+      if (!hasParaCSSImport) {
+        issues.push('❌ CRITICAL ISSUE #2: Para SDK CSS not imported');
+        validationResults.cssImportCheck = {
+          status: 'fail',
+          details: foundEntryPoints.length > 0 
+            ? `❌ CRITICAL: Missing "@getpara/react-sdk/styles.css" import in entry points: ${foundEntryPoints.join(', ')}`
+            : '❌ CRITICAL: No main entry points found and Para SDK CSS not imported'
+        };
+      }
+
+      // Check 3: Environment enum usage
+      let usesEnvironmentEnum = false;
+      let usesStringEnvironment = false;
+      let environmentFiles: string[] = [];
+
+      for (const file of providerFiles) {
+        try {
+          const content = await fs.readFile(file, 'utf-8');
+          
+          if (content.includes('Environment.DEVELOPMENT') || content.includes('Environment.PRODUCTION')) {
+            usesEnvironmentEnum = true;
+            environmentFiles.push(path.relative(projectPath, file));
+          }
+          
+          if ((content.includes('"development"') || content.includes('"production"')) && 
+              (content.includes('env:') || content.includes('environment:'))) {
+            usesStringEnvironment = true;
+          }
+        } catch (error) {
+          // Skip files we can't read
+        }
+      }
+
+      if (usesStringEnvironment && !usesEnvironmentEnum) {
+        issues.push('❌ CRITICAL ISSUE #3: Using string instead of Environment enum');
+        validationResults.environmentEnumCheck = {
+          status: 'fail',
+          details: '❌ CRITICAL: Using "development"/"production" strings instead of Environment enum'
+        };
+      } else if (usesEnvironmentEnum) {
+        validationResults.environmentEnumCheck = {
+          status: 'pass',
+          details: `✅ Using Environment enum correctly in: ${environmentFiles.join(', ')}`
+        };
+      } else {
+        validationResults.environmentEnumCheck = {
+          status: 'warning',
+          details: '⚠️ Environment configuration not found - check provider setup'
+        };
+      }
+
+      // Overall status
+      const resultValues = [validationResults.paraModalCheck, validationResults.cssImportCheck, validationResults.environmentEnumCheck];
+      const passCount = resultValues.filter(r => r.status === 'pass').length;
+      const failCount = resultValues.filter(r => r.status === 'fail').length;
+      
+      if (failCount === 0) {
+        validationResults.overallStatus = 'pass';
+      } else if (failCount > 0) {
+        validationResults.overallStatus = 'fail';
+      } else {
+        validationResults.overallStatus = 'warning';
+      }
+
+      return {
+        content: [
+          {
+            type: 'text',
+            text: JSON.stringify({
+              validationResults,
+              issues,
+              criticalIssueCount: issues.length,
+              fixes: this.generateParaMigrationFixes(issues),
+              successCriteria: {
+                paraModal: 'Add <ParaModal /> inside <ParaProvider>',
+                cssImport: 'Add import "@getpara/react-sdk/styles.css" to main entry point',
+                environmentEnum: 'Use Environment.DEVELOPMENT not "development" string'
+              },
+              nextSteps: issues.length === 0 
+                ? ['✅ All critical checks passed! Your Para migration should work correctly.']
+                : [
+                    'Fix the critical issues listed above',
+                    'Re-run validation after making fixes',
+                    'Test modal appearance before testing functionality',
+                    'Monitor browser console for any remaining errors'
+                  ],
+              debuggingTips: {
+                modalNotAppearing: 'Check ParaModal component and CSS imports',
+                brokenStyling: 'Verify CSS import location and order',
+                connectionErrors: 'Check Environment enum usage and API key',
+                infiniteLoading: 'Add timeout configurations in development mode'
+              },
+            }, null, 2),
+          },
+        ],
+      };
+
+    } catch (error) {
+      return {
+        content: [
+          {
+            type: 'text',
+            text: JSON.stringify({
+              error: `Validation failed: ${error instanceof Error ? error.message : String(error)}`,
+              fallbackChecklist: [
+                '[ ] Verify <ParaModal /> is inside <ParaProvider>',
+                '[ ] Verify CSS import: import "@getpara/react-sdk/styles.css"',
+                '[ ] Verify Environment enum: Environment.DEVELOPMENT',
+                '[ ] Check browser console for errors',
+                '[ ] Test modal opens when clicking connect button',
+              ],
+            }, null, 2),
+          },
+        ],
+      };
+    }
+  }
+
+  private async findProviderFiles(projectPath: string): Promise<string[]> {
+    const { promises: fs } = await import('fs');
+    const path = await import('path');
+    const files: string[] = [];
+    const extensions = ['.tsx', '.jsx', '.ts', '.js'];
+    
+    async function scanDirectory(dir: string, depth: number = 0) {
+      if (depth > 3) return; // Limit recursion depth
+      
+      try {
+        const entries = await fs.readdir(dir, { withFileTypes: true });
+        
+        for (const entry of entries) {
+          const fullPath = path.join(dir, entry.name);
+          
+          if (entry.isDirectory() && 
+              !entry.name.startsWith('.') && 
+              entry.name !== 'node_modules' &&
+              entry.name !== 'dist' &&
+              entry.name !== 'build') {
+            await scanDirectory(fullPath, depth + 1);
+          } else if (entry.isFile() && extensions.some(ext => entry.name.endsWith(ext))) {
+            // Look for provider-related files
+            if (entry.name.toLowerCase().includes('provider') || 
+                entry.name.toLowerCase().includes('app') ||
+                entry.name.toLowerCase().includes('root') ||
+                entry.name.toLowerCase().includes('layout')) {
+              files.push(fullPath);
+            }
+          }
+        }
+      } catch (error) {
+        // Ignore directories we can't read
+      }
+    }
+    
+    await scanDirectory(projectPath);
+    return files;
+  }
+
+  private generateParaMigrationFixes(issues: string[]): string[] {
+    const fixes: string[] = [];
+    
+    for (const issue of issues) {
+      if (issue.includes('ParaModal')) {
+        fixes.push('Fix: Add <ParaModal /> inside your <ParaProvider> component');
+        fixes.push('Location: In your provider component, add <ParaModal /> as a child of <ParaProvider>');
+        fixes.push('Code: <ParaProvider>...{children}<ParaModal /></ParaProvider>');
+      }
+      
+      if (issue.includes('CSS')) {
+        fixes.push('Fix: Add CSS import to your main entry point');
+        fixes.push('Location: src/main.tsx, app/layout.tsx, or pages/_app.tsx');
+        fixes.push('Code: import "@getpara/react-sdk/styles.css"');
+      }
+      
+      if (issue.includes('Environment')) {
+        fixes.push('Fix: Use Environment enum instead of string');
+        fixes.push('Import: import { Environment } from "@getpara/core-sdk"');
+        fixes.push('Code: env: Environment.DEVELOPMENT (not "development")');
+      }
+    }
+    
+    return fixes;
+  }
 }

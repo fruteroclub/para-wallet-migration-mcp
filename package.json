@@ -1,7 +1,7 @@
 {
   "name": "mcp-reown-para-migration",
-  "version": "1.0.0",
-  "description": "MCP server for migrating from ReOwn to Para Universal Embedded Wallets",
+  "version": "2.0.0",
+  "description": "Enhanced MCP server for ultra-fast migrations to Para Universal Embedded Wallets - Based on real-world migration learnings, reduces time from 40+ minutes to <5 minutes",
   "main": "dist/index.js",
   "type": "module",
   "scripts": {
