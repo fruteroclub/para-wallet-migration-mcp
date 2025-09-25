@@ -7,7 +7,7 @@ Automatically migrate from **ReOwn/WalletConnect**, **Privy**, and other wallet 
 ![Status](https://img.shields.io/badge/Status-Enhanced%20v2.0-brightgreen)
 ![License](https://img.shields.io/badge/License-MIT-blue)
 ![MCP Compatible](https://img.shields.io/badge/MCP-Compatible-purple)
-![Speed](https://img.shields.io/badge/Migration%20Time-<5%20min-success)
+![Speed](https://img.shields.io/badge/Migration%20Time-<20%20min-success)
 
 > **✅ Enhanced with real migration learnings** - Reduces migration time from **40+ minutes to <5 minutes**  
 > **🔧 Prevents the 3 critical issues** that cause **90% of migration failures**
