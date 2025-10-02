@@ -411,27 +411,13 @@ src/
 - Providers: X% complete
 - Hooks: X% complete
 ```
-
-### **Support Channels**
-- 🐛 **Bug Reports**: [GitHub Issues](https://github.com/fruteroclub/Para-wallet-migration-mcp/issues)
-- 💡 **Feature Requests**: [GitHub Discussions](https://github.com/fruteroclub/Para-wallet-migration-mcp/discussions)
-- 📖 **Documentation**: [Full API Reference](./docs/api.md)
-
 ---
 
 ## 📈 **Roadmap**
 
 ### **v2.1 (Coming Soon)**
-- ✅ **ConnectKit Migration Support**
-- ✅ **RainbowKit Migration Support**  
-- ✅ **Thirdweb Migration Support**
-- ✅ **Multi-chain Configuration Templates**
+- ✅ **Para from 0**
 
-### **v2.2 (Future)**
-- ✅ **Custom Hook Migration Patterns**
-- ✅ **Component Library Integration**
-- ✅ **Enterprise Migration Tools**
-- ✅ **Performance Analytics Dashboard**
 
 ---
 
