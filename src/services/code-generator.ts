@@ -1,11 +1,14 @@
 import { MigrationConfig } from '../types.js';
 
 export class CodeGenerator {
-  async generateProviderComponent(config: MigrationConfig, typescript: boolean = true): Promise<any> {
+  async generateProviderComponent(
+    config: MigrationConfig,
+    typescript: boolean = true
+  ): Promise<any> {
     const extension = typescript ? 'tsx' : 'jsx';
     const typeAnnotations = typescript ? ': React.ReactNode' : '';
     const envType = typescript ? ' as "development" | "production"' : '';
-    
+
     const providerCode = `
 ${typescript ? 'import React from "react";' : ''}
 import { ParaProvider, ParaModal } from "@getpara/react-sdk";
@@ -62,49 +65,52 @@ export function AppProviders({ children }${typescript ? ': AppProvidersProps' : 
       content: [
         {
           type: 'text',
-          text: JSON.stringify({
-            filename: `AppProviders.${extension}`,
-            code: providerCode,
-            dependencies: [
-              '@getpara/react-sdk',
-              '@getpara/core-sdk',
-              'viem',
-            ],
-            notes: [
-              'Replace the API key with your actual Para API key',
-              'Adjust chains based on your application needs',
-              'Import this provider at the root of your application',
-            ],
-            criticalFixes: [
-              '❌ CRITICAL ISSUE #1: <ParaModal /> component is REQUIRED for modal to appear',
-              '   Fix: Add <ParaModal /> inside your <ParaProvider>',
-              '   Why: Without this component, openModal() will work but no UI appears',
-              '',
-              '❌ CRITICAL ISSUE #2: Para SDK CSS must be imported', 
-              '   Fix: Add import "@getpara/react-sdk/styles.css" to your main layout',
-              '   Why: Modal will appear but styling will be completely broken without this',
-              '',
-              '❌ CRITICAL ISSUE #3: Environment enum usage required',
-              '   Fix: Use Environment.DEVELOPMENT not "development" string',
-              '   Why: Provider initialization fails with string values',
-            ],
-            implementationChecklist: [
-              '[ ] Replace API key with your actual Para API key',
-              '[ ] Verify <ParaModal /> is inside <ParaProvider>',
-              '[ ] Add CSS import to main entry point (layout.tsx/_app.tsx/main.tsx)',
-              '[ ] Use Environment.DEVELOPMENT enum not string',
-              '[ ] Test modal opens when clicking connect button',
-              '[ ] Verify modal has proper styling (not broken CSS)',
-            ],
-          }, null, 2),
+          text: JSON.stringify(
+            {
+              filename: `AppProviders.${extension}`,
+              code: providerCode,
+              dependencies: ['@getpara/react-sdk', '@getpara/core-sdk', 'viem'],
+              notes: [
+                'Replace the API key with your actual Para API key',
+                'Adjust chains based on your application needs',
+                'Import this provider at the root of your application',
+              ],
+              criticalFixes: [
+                '❌ CRITICAL ISSUE #1: <ParaModal /> component is REQUIRED for modal to appear',
+                '   Fix: Add <ParaModal /> inside your <ParaProvider>',
+                '   Why: Without this component, openModal() will work but no UI appears',
+                '',
+                '❌ CRITICAL ISSUE #2: Para SDK CSS must be imported',
+                '   Fix: Add import "@getpara/react-sdk/styles.css" to your main layout',
+                '   Why: Modal will appear but styling will be completely broken without this',
+                '',
+                '❌ CRITICAL ISSUE #3: Environment enum usage required',
+                '   Fix: Use Environment.DEVELOPMENT not "development" string',
+                '   Why: Provider initialization fails with string values',
+              ],
+              implementationChecklist: [
+                '[ ] Replace API key with your actual Para API key',
+                '[ ] Verify <ParaModal /> is inside <ParaProvider>',
+                '[ ] Add CSS import to main entry point (layout.tsx/_app.tsx/main.tsx)',
+                '[ ] Use Environment.DEVELOPMENT enum not string',
+                '[ ] Test modal opens when clicking connect button',
+                '[ ] Verify modal has proper styling (not broken CSS)',
+              ],
+            },
+            null,
+            2
+          ),
         },
       ],
     };
   }
 
-  async generateConnectButton(typescript: boolean = true, styling: string = 'tailwind'): Promise<any> {
+  async generateConnectButton(
+    typescript: boolean = true,
+    styling: string = 'tailwind'
+  ): Promise<any> {
     const extension = typescript ? 'tsx' : 'jsx';
-    
+
     const baseCode = `
 ${typescript ? 'import React from "react";' : ''}
 import { useAccount, useModal, useWallet } from "@getpara/react-sdk";
@@ -202,29 +208,31 @@ export function AdvancedConnectButton() {
       content: [
         {
           type: 'text',
-          text: JSON.stringify({
-            filename: `ConnectButton.${extension}`,
-            code: baseCode,
-            styling,
-            dependencies: [
-              '@getpara/react-sdk',
-            ],
-            notes: [
-              'Customize the styling classes based on your design system',
-              'The AdvancedConnectButton includes disconnect functionality',
-              'Use the openModal() function to show Para\'s connection interface',
-            ],
-            examples: [
-              {
-                title: 'Basic Usage',
-                code: '<ConnectButton />',
-              },
-              {
-                title: 'Advanced Usage',
-                code: '<AdvancedConnectButton />',
-              },
-            ],
-          }, null, 2),
+          text: JSON.stringify(
+            {
+              filename: `ConnectButton.${extension}`,
+              code: baseCode,
+              styling,
+              dependencies: ['@getpara/react-sdk'],
+              notes: [
+                'Customize the styling classes based on your design system',
+                'The AdvancedConnectButton includes disconnect functionality',
+                "Use the openModal() function to show Para's connection interface",
+              ],
+              examples: [
+                {
+                  title: 'Basic Usage',
+                  code: '<ConnectButton />',
+                },
+                {
+                  title: 'Advanced Usage',
+                  code: '<AdvancedConnectButton />',
+                },
+              ],
+            },
+            null,
+            2
+          ),
         },
       ],
     };
@@ -232,7 +240,7 @@ export function AdvancedConnectButton() {
 
   async generateLayoutWithStyles(typescript: boolean = true): Promise<any> {
     const extension = typescript ? 'tsx' : 'jsx';
-    
+
     const layoutCode = `
 import type { Metadata } from 'next'
 import '@/styles/globals.css'
@@ -266,19 +274,21 @@ export default function RootLayout({
       content: [
         {
           type: 'text',
-          text: JSON.stringify({
-            filename: `layout.${extension}`,
-            code: layoutCode,
-            dependencies: [
-              'next',
-            ],
-            notes: [
-              'This is a Next.js layout example',
-              '⚠️ CRITICAL: "@getpara/react-sdk/styles.css" import is REQUIRED',
-              'Place this in your app/layout.tsx for Next.js App Router',
-              'For Pages Router, add the CSS import to _app.tsx',
-            ],
-          }, null, 2),
+          text: JSON.stringify(
+            {
+              filename: `layout.${extension}`,
+              code: layoutCode,
+              dependencies: ['next'],
+              notes: [
+                'This is a Next.js layout example',
+                '⚠️ CRITICAL: "@getpara/react-sdk/styles.css" import is REQUIRED',
+                'Place this in your app/layout.tsx for Next.js App Router',
+                'For Pages Router, add the CSS import to _app.tsx',
+              ],
+            },
+            null,
+            2
+          ),
         },
       ],
     };
@@ -294,11 +304,13 @@ export default function RootLayout({
       56: 'bsc',
     };
 
-    return chainIds.map(id => chainMap[id] || `/* Chain ID ${id} - add appropriate import */`).join(', ');
+    return chainIds
+      .map((id) => chainMap[id] || `/* Chain ID ${id} - add appropriate import */`)
+      .join(', ');
   }
 
   private generateTransports(chainIds: number[]): string {
-    return chainIds.map(id => `[${id}]: http(),`).join('\n              ');
+    return chainIds.map((id) => `[${id}]: http(),`).join('\n              ');
   }
 
   private generateStyleImports(styling: string): string {
@@ -406,18 +418,18 @@ export default function RootLayout({
   async generateCssImports(projectPath: string, typescript: boolean = true): Promise<any> {
     const { promises: fs } = await import('fs');
     const path = await import('path');
-    
+
     try {
       // Find the main entry point
       const entryPoints = [
         'src/main.tsx',
         'src/main.ts',
-        'src/index.tsx', 
+        'src/index.tsx',
         'src/index.ts',
         'app/layout.tsx',
         'app/layout.ts',
         'pages/_app.tsx',
-        'pages/_app.ts'
+        'pages/_app.ts',
       ];
 
       let foundEntryPoint = null;
@@ -469,30 +481,38 @@ import '@getpara/react-sdk/styles.css'
 // - app/layout.tsx (Next.js App Router) 
 // - pages/_app.tsx (Next.js Pages Router)`;
 
-        instructions = 'Could not find main entry point. Add CSS import to your main application file.';
+        instructions =
+          'Could not find main entry point. Add CSS import to your main application file.';
       }
 
       return {
         content: [
           {
             type: 'text',
-            text: JSON.stringify({
-              entryPointFound: foundEntryPoint,
-              entryPointType,
-              cssImportCode,
-              instructions,
-              criticalNotes: [
-                '⚠️ CRITICAL: Para SDK CSS import is REQUIRED for modal functionality',
-                'Missing this causes broken modal styling (#2 most common migration failure)',
-                'The modal will appear but styling will be completely broken without this import',
-                'This must be imported BEFORE your main App component renders',
-              ],
-              troubleshooting: {
-                'Modal appears but looks broken': 'Missing CSS import - add @getpara/react-sdk/styles.css',
-                'Modal has no styling': 'CSS import not in the right location - move to main entry point',
-                'Styles conflict with app': 'Para styles may need to be imported after your global styles',
+            text: JSON.stringify(
+              {
+                entryPointFound: foundEntryPoint,
+                entryPointType,
+                cssImportCode,
+                instructions,
+                criticalNotes: [
+                  '⚠️ CRITICAL: Para SDK CSS import is REQUIRED for modal functionality',
+                  'Missing this causes broken modal styling (#2 most common migration failure)',
+                  'The modal will appear but styling will be completely broken without this import',
+                  'This must be imported BEFORE your main App component renders',
+                ],
+                troubleshooting: {
+                  'Modal appears but looks broken':
+                    'Missing CSS import - add @getpara/react-sdk/styles.css',
+                  'Modal has no styling':
+                    'CSS import not in the right location - move to main entry point',
+                  'Styles conflict with app':
+                    'Para styles may need to be imported after your global styles',
+                },
               },
-            }, null, 2),
+              null,
+              2
+            ),
           },
         ],
       };
@@ -501,25 +521,32 @@ import '@getpara/react-sdk/styles.css'
         content: [
           {
             type: 'text',
-            text: JSON.stringify({
-              error: `Failed to generate CSS imports: ${error instanceof Error ? error.message : String(error)}`,
-              fallbackInstructions: [
-                'Add this import to your main entry point:',
-                "import '@getpara/react-sdk/styles.css'",
-                '',
-                'Common locations:',
-                '- src/main.tsx (Vite/CRA)',
-                '- app/layout.tsx (Next.js App Router)',
-                '- pages/_app.tsx (Next.js Pages Router)',
-              ],
-            }, null, 2),
+            text: JSON.stringify(
+              {
+                error: `Failed to generate CSS imports: ${error instanceof Error ? error.message : String(error)}`,
+                fallbackInstructions: [
+                  'Add this import to your main entry point:',
+                  "import '@getpara/react-sdk/styles.css'",
+                  '',
+                  'Common locations:',
+                  '- src/main.tsx (Vite/CRA)',
+                  '- app/layout.tsx (Next.js App Router)',
+                  '- pages/_app.tsx (Next.js Pages Router)',
+                ],
+              },
+              null,
+              2
+            ),
           },
         ],
       };
     }
   }
 
-  async generateHooksExamples(fromProvider: string = 'privy', typescript: boolean = true): Promise<any> {
+  async generateHooksExamples(
+    fromProvider: string = 'privy',
+    typescript: boolean = true
+  ): Promise<any> {
     const extension = typescript ? 'tsx' : 'jsx';
 
     let beforeAfterCode = '';
@@ -594,7 +621,7 @@ export function WalletComponent() {
         `;
 
         migrationNotes = [
-          'Para uses wallet-first approach vs Privy\'s user-first approach',
+          "Para uses wallet-first approach vs Privy's user-first approach",
           'Replace usePrivy() with useAccount() + useWallet() + useModal()',
           'Replace login() with openModal() function',
           'Replace logout() with disconnect() function',
@@ -758,26 +785,30 @@ export function WalletInfo() {
       content: [
         {
           type: 'text',
-          text: JSON.stringify({
-            filename: `migration-examples-${fromProvider}.${extension}`,
-            fromProvider,
-            code: beforeAfterCode.trim(),
-            migrationNotes,
-            criticalReminders: [
-              '⚠️ CRITICAL: Always include <ParaModal /> in your provider',
-              '⚠️ CRITICAL: Import @getpara/react-sdk/styles.css in main app file',
-              '⚠️ CRITICAL: Use Environment.DEVELOPMENT not "development" string',
-              '⚠️ CRITICAL: Test modal appearance before testing functionality',
-            ],
-            testingChecklist: [
-              '[ ] Modal opens when openModal() is called',
-              '[ ] Modal has proper styling (not broken CSS)',
-              '[ ] Connection flow works end-to-end',
-              '[ ] Disconnect functionality works',
-              '[ ] Existing Wagmi hooks still return data',
-              '[ ] No console errors in browser',
-            ],
-          }, null, 2),
+          text: JSON.stringify(
+            {
+              filename: `migration-examples-${fromProvider}.${extension}`,
+              fromProvider,
+              code: beforeAfterCode.trim(),
+              migrationNotes,
+              criticalReminders: [
+                '⚠️ CRITICAL: Always include <ParaModal /> in your provider',
+                '⚠️ CRITICAL: Import @getpara/react-sdk/styles.css in main app file',
+                '⚠️ CRITICAL: Use Environment.DEVELOPMENT not "development" string',
+                '⚠️ CRITICAL: Test modal appearance before testing functionality',
+              ],
+              testingChecklist: [
+                '[ ] Modal opens when openModal() is called',
+                '[ ] Modal has proper styling (not broken CSS)',
+                '[ ] Connection flow works end-to-end',
+                '[ ] Disconnect functionality works',
+                '[ ] Existing Wagmi hooks still return data',
+                '[ ] No console errors in browser',
+              ],
+            },
+            null,
+            2
+          ),
         },
       ],
     };
@@ -797,7 +828,7 @@ export function WalletInfo() {
       },
       // Enhanced embedded wallet config for speed
       embeddedWalletConfig: {
-        createOnLogin: "all-users",
+        createOnLogin: 'all-users',
         showWalletUiOnLogin: true,
         skipEmailVerification: true, // Dev only - skip email verification
         autoConnect: true, // Auto-connect returning users
@@ -808,7 +839,7 @@ export function WalletInfo() {
         ...baseConfig.externalWalletConfig,
         connectionTimeout: 5000, // 5s connection timeout
         retryAttempts: 2, // Fewer retries for faster failures
-        preferredWallets: ["METAMASK"], // Start with most common wallet
+        preferredWallets: ['METAMASK'], // Start with most common wallet
       },
     };
 
@@ -872,41 +903,45 @@ export function QuickParaProvider({ children }: { children: React.ReactNode }) {
       content: [
         {
           type: 'text',
-          text: JSON.stringify({
-            quickConfig,
-            implementationCode: implementationCode.trim(),
-            speedOptimizations: [
-              'skipApiValidation: Skip slow API validation in development',
-              'timeoutMs: 3000ms timeout prevents infinite loading states',
-              'assumeValidInDev: Skip CORS validation for local development',
-              'connectionTimeout: 5000ms fast wallet connection timeout',
-              'retryAttempts: 2 - fail fast vs hanging indefinitely',
-              'skipEmailVerification: Skip email verification in dev (testing only)',
-              'autoConnect: Automatic reconnection for returning users',
-              'cacheCredentials: Cache wallet credentials for speed',
-            ],
-            migrationTimeline: {
-              step1: { task: 'Provider setup with ParaModal', estimatedTime: '30 seconds' },
-              step2: { task: 'CSS imports to main entry point', estimatedTime: '15 seconds' },
-              step3: { task: 'Hook pattern updates', estimatedTime: '2 minutes' },
-              step4: { task: 'Validation and testing', estimatedTime: '1 minute' },
-              total: '~3.5 minutes (vs 40+ minutes before optimizations)',
+          text: JSON.stringify(
+            {
+              quickConfig,
+              implementationCode: implementationCode.trim(),
+              speedOptimizations: [
+                'skipApiValidation: Skip slow API validation in development',
+                'timeoutMs: 3000ms timeout prevents infinite loading states',
+                'assumeValidInDev: Skip CORS validation for local development',
+                'connectionTimeout: 5000ms fast wallet connection timeout',
+                'retryAttempts: 2 - fail fast vs hanging indefinitely',
+                'skipEmailVerification: Skip email verification in dev (testing only)',
+                'autoConnect: Automatic reconnection for returning users',
+                'cacheCredentials: Cache wallet credentials for speed',
+              ],
+              migrationTimeline: {
+                step1: { task: 'Provider setup with ParaModal', estimatedTime: '30 seconds' },
+                step2: { task: 'CSS imports to main entry point', estimatedTime: '15 seconds' },
+                step3: { task: 'Hook pattern updates', estimatedTime: '2 minutes' },
+                step4: { task: 'Validation and testing', estimatedTime: '1 minute' },
+                total: '~3.5 minutes (vs 40+ minutes before optimizations)',
+              },
+              productionChecklist: [
+                '[ ] Remove skipEmailVerification before production',
+                '[ ] Remove skipApiValidation before production',
+                '[ ] Remove assumeValidInDev before production',
+                '[ ] Test full validation flow in staging',
+                '[ ] Verify all timeouts work in production environment',
+                '[ ] Monitor connection success rates',
+              ],
+              troubleshootingFast: {
+                'App stuck "Initializing..."': 'Check timeoutMs setting and API key validity',
+                'Modal not appearing': 'Verify <ParaModal /> inside <ParaProvider>',
+                'Wallet connection hangs': 'Check connectionTimeout and retryAttempts settings',
+                'CSS styling broken': 'Verify CSS import in main app file',
+              },
             },
-            productionChecklist: [
-              '[ ] Remove skipEmailVerification before production',
-              '[ ] Remove skipApiValidation before production',
-              '[ ] Remove assumeValidInDev before production',
-              '[ ] Test full validation flow in staging',
-              '[ ] Verify all timeouts work in production environment',
-              '[ ] Monitor connection success rates',
-            ],
-            troubleshootingFast: {
-              'App stuck "Initializing..."': 'Check timeoutMs setting and API key validity',
-              'Modal not appearing': 'Verify <ParaModal /> inside <ParaProvider>',
-              'Wallet connection hangs': 'Check connectionTimeout and retryAttempts settings',
-              'CSS styling broken': 'Verify CSS import in main app file',
-            },
-          }, null, 2),
+            null,
+            2
+          ),
         },
       ],
     };

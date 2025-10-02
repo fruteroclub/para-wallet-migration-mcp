@@ -12,7 +12,7 @@ export class MigrationService {
       // Detect ReOwn/WalletConnect usage
       const reownPackages = this.detectReownPackages(packageJson);
       const walletConnectPackages = this.detectWalletConnectPackages(packageJson);
-      
+
       // Detect Privy usage
       const privyPackages = this.detectPrivyPackages(packageJson);
 
@@ -21,41 +21,58 @@ export class MigrationService {
       const usagePatterns = await this.analyzeUsagePatterns(sourceFiles);
 
       // Estimate migration complexity
-      const complexity = this.estimateMigrationComplexity(reownPackages, walletConnectPackages, privyPackages, usagePatterns);
+      const complexity = this.estimateMigrationComplexity(
+        reownPackages,
+        walletConnectPackages,
+        privyPackages,
+        usagePatterns
+      );
 
       return {
         content: [
           {
             type: 'text',
-            text: JSON.stringify({
-              analysis: {
-                projectPath,
-                packageJsonAnalysis: {
-                  reownPackages,
-                  walletConnectPackages,
-                  privyPackages,
-                  totalPackagesToMigrate: reownPackages.length + walletConnectPackages.length + privyPackages.length,
+            text: JSON.stringify(
+              {
+                analysis: {
+                  projectPath,
+                  packageJsonAnalysis: {
+                    reownPackages,
+                    walletConnectPackages,
+                    privyPackages,
+                    totalPackagesToMigrate:
+                      reownPackages.length + walletConnectPackages.length + privyPackages.length,
+                  },
+                  sourceCodeAnalysis: {
+                    filesScanned: sourceFiles.length,
+                    usagePatterns,
+                  },
+                  migrationComplexity: complexity,
+                  recommendations: this.generateRecommendations(
+                    reownPackages,
+                    walletConnectPackages,
+                    privyPackages,
+                    usagePatterns
+                  ),
                 },
-                sourceCodeAnalysis: {
-                  filesScanned: sourceFiles.length,
-                  usagePatterns,
-                },
-                migrationComplexity: complexity,
-                recommendations: this.generateRecommendations(reownPackages, walletConnectPackages, privyPackages, usagePatterns),
               },
-            }, null, 2),
+              null,
+              2
+            ),
           },
         ],
       };
     } catch (error) {
-      throw new Error(`Failed to analyze project: ${error instanceof Error ? error.message : String(error)}`);
+      throw new Error(
+        `Failed to analyze project: ${error instanceof Error ? error.message : String(error)}`
+      );
     }
   }
 
   async generateMigrationConfig(config: MigrationConfig): Promise<any> {
     try {
       const validatedConfig = MigrationConfigSchema.parse(config);
-      
+
       const migrationSteps = [
         {
           step: 'Package Migration',
@@ -98,16 +115,22 @@ export class MigrationService {
         content: [
           {
             type: 'text',
-            text: JSON.stringify({
-              migrationConfig: validatedConfig,
-              migrationSteps,
-              estimatedTimeMinutes: this.estimateMigrationTime(migrationSteps),
-            }, null, 2),
+            text: JSON.stringify(
+              {
+                migrationConfig: validatedConfig,
+                migrationSteps,
+                estimatedTimeMinutes: this.estimateMigrationTime(migrationSteps),
+              },
+              null,
+              2
+            ),
           },
         ],
       };
     } catch (error) {
-      throw new Error(`Failed to generate migration config: ${error instanceof Error ? error.message : String(error)}`);
+      throw new Error(
+        `Failed to generate migration config: ${error instanceof Error ? error.message : String(error)}`
+      );
     }
   }
 
@@ -119,7 +142,8 @@ export class MigrationService {
     const guide = {
       projectName,
       migrationGuide: {
-        overview: 'Complete migration guide from ReOwn/WalletConnect to Para Universal Embedded Wallets',
+        overview:
+          'Complete migration guide from ReOwn/WalletConnect to Para Universal Embedded Wallets',
         prerequisites: [
           'Para API key (get from Para dashboard)',
           'Node.js and npm/yarn installed',
@@ -148,10 +172,7 @@ npm run postinstall
           {
             title: '2. Environment Setup',
             description: 'Configure environment variables',
-            actions: [
-              'Add Para API key to .env file',
-              'Set environment (development/production)',
-            ],
+            actions: ['Add Para API key to .env file', 'Set environment (development/production)'],
             code: `
 # .env
 PARA_API_KEY=your_para_api_key_here
@@ -216,43 +237,39 @@ PARA_ENVIRONMENT=development
 
   private detectReownPackages(packageJson: any): string[] {
     const dependencies = { ...packageJson.dependencies, ...packageJson.devDependencies };
-    return Object.keys(dependencies).filter(pkg => 
-      pkg.includes('@web3modal') || 
-      pkg.includes('reown') ||
-      pkg.includes('@reown')
+    return Object.keys(dependencies).filter(
+      (pkg) => pkg.includes('@web3modal') || pkg.includes('reown') || pkg.includes('@reown')
     );
   }
 
   private detectWalletConnectPackages(packageJson: any): string[] {
     const dependencies = { ...packageJson.dependencies, ...packageJson.devDependencies };
-    return Object.keys(dependencies).filter(pkg => 
-      pkg.includes('@walletconnect') ||
-      pkg.includes('walletconnect')
+    return Object.keys(dependencies).filter(
+      (pkg) => pkg.includes('@walletconnect') || pkg.includes('walletconnect')
     );
   }
 
   private detectPrivyPackages(packageJson: any): string[] {
     const dependencies = { ...packageJson.dependencies, ...packageJson.devDependencies };
-    return Object.keys(dependencies).filter(pkg => 
-      pkg.includes('@privy-io') ||
-      pkg.includes('privy')
+    return Object.keys(dependencies).filter(
+      (pkg) => pkg.includes('@privy-io') || pkg.includes('privy')
     );
   }
 
   private async findSourceFiles(projectPath: string): Promise<string[]> {
     const files: string[] = [];
     const extensions = ['.ts', '.tsx', '.js', '.jsx'];
-    
+
     async function scanDirectory(dir: string) {
       try {
         const entries = await fs.readdir(dir, { withFileTypes: true });
-        
+
         for (const entry of entries) {
           const fullPath = path.join(dir, entry.name);
-          
+
           if (entry.isDirectory() && !entry.name.startsWith('.') && entry.name !== 'node_modules') {
             await scanDirectory(fullPath);
-          } else if (entry.isFile() && extensions.some(ext => entry.name.endsWith(ext))) {
+          } else if (entry.isFile() && extensions.some((ext) => entry.name.endsWith(ext))) {
             files.push(fullPath);
           }
         }
@@ -260,7 +277,7 @@ PARA_ENVIRONMENT=development
         // Ignore directories we can't read
       }
     }
-    
+
     await scanDirectory(projectPath);
     return files;
   }
@@ -277,18 +294,29 @@ PARA_ENVIRONMENT=development
       usePrivyHooks: 0,
     };
 
-    for (const file of sourceFiles.slice(0, 100)) { // Limit to first 100 files for performance
+    for (const file of sourceFiles.slice(0, 100)) {
+      // Limit to first 100 files for performance
       try {
         const content = await fs.readFile(file, 'utf-8');
-        
+
         if (content.includes('@web3modal')) patterns.web3ModalImports++;
         if (content.includes('@walletconnect')) patterns.walletConnectImports++;
         if (content.includes('@privy-io')) patterns.privyImports++;
-        if (content.includes('use') && (content.includes('wagmi') || content.includes('Account') || content.includes('Balance'))) patterns.wagmiHooks++;
+        if (
+          content.includes('use') &&
+          (content.includes('wagmi') || content.includes('Account') || content.includes('Balance'))
+        )
+          patterns.wagmiHooks++;
         if (content.includes('createWeb3Modal')) patterns.createWeb3ModalUsage++;
-        if (content.includes('w3m-button') || content.includes('ConnectButton')) patterns.connectButtonUsage++;
+        if (content.includes('w3m-button') || content.includes('ConnectButton'))
+          patterns.connectButtonUsage++;
         if (content.includes('PrivyProvider')) patterns.privyProviderUsage++;
-        if (content.includes('usePrivy') || content.includes('useLogin') || content.includes('useWallets')) patterns.usePrivyHooks++;
+        if (
+          content.includes('usePrivy') ||
+          content.includes('useLogin') ||
+          content.includes('useWallets')
+        )
+          patterns.usePrivyHooks++;
       } catch (error) {
         // Ignore files we can't read
       }
@@ -297,16 +325,30 @@ PARA_ENVIRONMENT=development
     return patterns;
   }
 
-  private estimateMigrationComplexity(reownPackages: string[], walletConnectPackages: string[], privyPackages: string[], usagePatterns: any): string {
-    const totalPackages = reownPackages.length + walletConnectPackages.length + privyPackages.length;
-    const totalUsage = Object.values(usagePatterns).reduce((sum: number, count) => sum + (count as number), 0);
+  private estimateMigrationComplexity(
+    reownPackages: string[],
+    walletConnectPackages: string[],
+    privyPackages: string[],
+    usagePatterns: any
+  ): string {
+    const totalPackages =
+      reownPackages.length + walletConnectPackages.length + privyPackages.length;
+    const totalUsage = Object.values(usagePatterns).reduce(
+      (sum: number, count) => sum + (count as number),
+      0
+    );
 
     if (totalPackages <= 2 && totalUsage <= 10) return 'Low';
     if (totalPackages <= 5 && totalUsage <= 25) return 'Medium';
     return 'High';
   }
 
-  private generateRecommendations(reownPackages: string[], walletConnectPackages: string[], privyPackages: string[], usagePatterns: any): string[] {
+  private generateRecommendations(
+    reownPackages: string[],
+    walletConnectPackages: string[],
+    privyPackages: string[],
+    usagePatterns: any
+  ): string[] {
     const recommendations: string[] = [];
 
     if (reownPackages.length > 0) {
@@ -314,7 +356,9 @@ PARA_ENVIRONMENT=development
     }
 
     if (walletConnectPackages.length > 0) {
-      recommendations.push('WalletConnect packages may conflict with Para - consider removing unused ones');
+      recommendations.push(
+        'WalletConnect packages may conflict with Para - consider removing unused ones'
+      );
     }
 
     if (privyPackages.length > 0) {
@@ -331,17 +375,23 @@ PARA_ENVIRONMENT=development
     }
 
     if (usagePatterns.usePrivyHooks > 0) {
-      recommendations.push('Replace usePrivy, useLogin, and useWallets hooks with Para equivalents');
+      recommendations.push(
+        'Replace usePrivy, useLogin, and useWallets hooks with Para equivalents'
+      );
     }
 
     if (usagePatterns.privyProviderUsage > 0) {
-      recommendations.push('Update PrivyProvider configuration to use Para Universal Embedded Wallets');
+      recommendations.push(
+        'Update PrivyProvider configuration to use Para Universal Embedded Wallets'
+      );
     }
 
     // Critical findings from actual migration testing
     recommendations.push('⚠️ CRITICAL: Always include <ParaModal /> component inside ParaProvider');
     recommendations.push('⚠️ CRITICAL: Import "@getpara/react-sdk/styles.css" in your layout');
-    recommendations.push('⚠️ CRITICAL: Use Environment.DEVELOPMENT/PRODUCTION from @getpara/core-sdk');
+    recommendations.push(
+      '⚠️ CRITICAL: Use Environment.DEVELOPMENT/PRODUCTION from @getpara/core-sdk'
+    );
     recommendations.push('Configure embeddedWalletConfig for seamless wallet creation');
     recommendations.push('Test thoroughly in development before deploying to production');
     recommendations.push('Consider implementing gradual rollout for production deployments');
@@ -353,8 +403,8 @@ PARA_ENVIRONMENT=development
     // Base time estimation in minutes
     const baseTime = 30; // Basic setup
     const perStepTime = 15; // Additional time per complex step
-    
-    return baseTime + (steps.length * perStepTime);
+
+    return baseTime + steps.length * perStepTime;
   }
 
   private generateProviderMigrationCode(_config?: any): string {

@@ -9,10 +9,12 @@ import {
 import { MigrationService } from './services/migration-service.js';
 import { CodeGenerator } from './services/code-generator.js';
 import { ValidationService } from './services/validation-service.js';
+import { MigrationEngine, MigrationStrategy } from './core/migration-engine.js';
+import { StrategyFactory } from './core/replacement-strategy.js';
 
 const server = new Server({
   name: 'mcp-reown-para-migration',
-  version: '1.0.0',
+  version: '2.0.0',
   capabilities: {
     tools: {},
   },
@@ -22,6 +24,7 @@ const server = new Server({
 const migrationService = new MigrationService();
 const codeGenerator = new CodeGenerator();
 const validationService = new ValidationService();
+const migrationEngine = new MigrationEngine();
 
 // List available tools
 server.setRequestHandler(ListToolsRequestSchema, async () => {
@@ -29,7 +32,7 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
     tools: [
       {
         name: 'analyze_project',
-        description: 'Analyze a project to detect ReOwn/WalletConnect usage and prepare migration plan',
+        description: 'Analyze a project to detect wallet provider usage and prepare atomic migration plan',
         inputSchema: {
           type: 'object',
           properties: {
@@ -40,6 +43,44 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
             packageJsonPath: {
               type: 'string',
               description: 'Path to package.json file (optional)',
+            },
+          },
+          required: ['projectPath'],
+        },
+      },
+      {
+        name: 'execute_atomic_migration',
+        description: 'Execute complete atomic migration with rollback capability',
+        inputSchema: {
+          type: 'object',
+          properties: {
+            projectPath: {
+              type: 'string',
+              description: 'Path to the project directory',
+            },
+            strategy: {
+              type: 'string',
+              enum: ['privy-to-para', 'reown-to-para', 'web3modal-to-para', 'walletconnect-to-para'],
+              description: 'Migration strategy to use',
+            },
+            dryRun: {
+              type: 'boolean',
+              description: 'Perform dry run without making changes',
+              default: false,
+            },
+          },
+          required: ['projectPath'],
+        },
+      },
+      {
+        name: 'validate_migration_state',
+        description: 'Validate current migration state and detect completion percentage',
+        inputSchema: {
+          type: 'object',
+          properties: {
+            projectPath: {
+              type: 'string',
+              description: 'Path to the project directory',
             },
           },
           required: ['projectPath'],
@@ -277,6 +318,71 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
   try {
     switch (name) {
       case 'analyze_project':
+        // Use new migration engine for analysis
+        const projectState = await migrationEngine.scanProjectState(args.projectPath as string);
+        const detectedStrategy = StrategyFactory.detectStrategy(projectState);
+        
+        return {
+          content: [{
+            type: 'text',
+            text: JSON.stringify({
+              projectState,
+              detectedStrategy,
+              recommendations: detectedStrategy ? 
+                `Detected ${detectedStrategy} migration pattern. Use execute_atomic_migration to proceed.` :
+                'No supported wallet provider detected for migration.'
+            }, null, 2)
+          }]
+        };
+
+      case 'execute_atomic_migration':
+        const strategy = args.strategy as MigrationStrategy || StrategyFactory.detectStrategy(
+          await migrationEngine.scanProjectState(args.projectPath as string)
+        );
+        
+        if (!strategy) {
+          return {
+            content: [{
+              type: 'text',
+              text: 'Error: No migration strategy detected or specified'
+            }],
+            isError: true
+          };
+        }
+
+        if (args.dryRun) {
+          // Perform dry run
+          const plan = await migrationEngine.createReplacementPlan(strategy);
+          return {
+            content: [{
+              type: 'text',
+              text: `DRY RUN - Migration Plan:\n${JSON.stringify(plan, null, 2)}`
+            }]
+          };
+        } else {
+          // Execute actual migration
+          const result = await migrationEngine.executeAtomicMigration();
+          return {
+            content: [{
+              type: 'text',
+              text: JSON.stringify(result, null, 2)
+            }],
+            isError: !result.success
+          };
+        }
+
+      case 'validate_migration_state':
+        const validationResult = await migrationEngine.validateCompletion();
+        return {
+          content: [{
+            type: 'text',
+            text: JSON.stringify(validationResult, null, 2)
+          }],
+          isError: !validationResult.valid
+        };
+
+      // Legacy tool support for backwards compatibility
+      case 'analyze_project_legacy':
         return await migrationService.analyzeProject(
           args.projectPath as string,
           args.packageJsonPath as string | undefined
@@ -365,7 +471,7 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
 async function main() {
   const transport = new StdioServerTransport();
   await server.connect(transport);
-  console.error('MCP ReOwn to Para Migration Server running on stdio');
+  console.error('MCP Para Migration Server v2.0 (Replacement-Based Architecture) running on stdio');
 }
 
 main().catch((error) => {
