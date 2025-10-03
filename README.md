@@ -121,17 +121,52 @@ npm run build
 
 ### **MCP Configuration**
 
-#### **For Claude Code**
+#### **For Claude Code (Recommended)**
+
+**Method 1: Automatic Setup via Claude Code**
+1. Clone and build this repository
+2. In any Claude Code session, run:
+```bash
+# Add to global MCP configuration
+python3 -c "
+import json
+with open('/home/$(whoami)/.claude.json', 'r') as f:
+    data = json.load(f)
+data['mcpServers']['para-migration'] = {
+    'command': 'node',
+    'args': ['$(pwd)/dist/index.js']
+}
+with open('/home/$(whoami)/.claude.json', 'w') as f:
+    json.dump(data, f, indent=2)
+print('✅ Para Migration MCP added to Claude Code')
+"
+```
+3. Restart Claude Code
+4. Verify with `/mcp list` - you should see `para-migration ✔ connected`
+
+**Method 2: Manual Configuration**
+Edit `~/.claude.json` and add to the global `mcpServers` section:
 ```json
 {
   "mcpServers": {
     "para-migration": {
       "command": "node",
-      "args": ["/absolute/path/to/Para-wallet-migration-mcp/dist/index.js"],
-      "env": {}
+      "args": ["/absolute/path/to/Para-wallet-migration-mcp/dist/index.js"]
     }
   }
 }
+```
+
+**Verification Commands:**
+```bash
+# Check MCP status in Claude Code
+/mcp list
+
+# Should show:
+# ❯ 5. para-migration    ✔ connected · Enter to view details
+
+# Test MCP functionality
+"Analyze my project for wallet provider migration"
 ```
 
 #### **For Cursor**
@@ -144,6 +179,69 @@ npm run build
     }
   }
 }
+```
+
+#### **For Claude Desktop**
+Edit `~/.config/claude-desktop/claude_desktop_config.json`:
+```json
+{
+  "mcpServers": {
+    "para-migration": {
+      "command": "node",
+      "args": ["/absolute/path/to/Para-wallet-migration-mcp/dist/index.js"],
+      "env": {}
+    }
+  }
+}
+```
+
+---
+
+---
+
+## 🎯 **Claude Code Integration**
+
+### **✅ MCP Server Status Verification**
+
+After installing and restarting Claude Code, verify the MCP server is connected:
+
+```bash
+# Check all MCP servers
+/mcp list
+
+# Expected output:
+│ Manage MCP servers                                                           │
+│                                                                              │
+│ ❯ 1. context7                       ✔ connected · Enter to view details     │
+│   2. playwright                     ✔ connected · Enter to view details     │
+│   3. sequential-thinking            ✔ connected · Enter to view details     │
+│   4. serena                         ✘ failed · Enter to view details        │
+│   5. para-migration                 ✔ connected · Enter to view details     │
+```
+
+### **🔧 Available MCP Commands in Claude Code**
+
+Once `para-migration ✔ connected` appears in `/mcp list`, you can use these natural language commands:
+
+| Command | MCP Tool Used | Expected Result |
+|---------|---------------|-----------------|
+| `"Analyze my project for wallet provider migration"` | `analyze_project` | Detects Privy/ReOwn/Web3Modal usage |
+| `"Execute atomic migration from Privy to Para"` | `execute_atomic_migration` | Complete migration in <5 minutes |
+| `"Validate Para migration critical issues"` | `validate_para_migration` | Checks 3 critical failure points |
+| `"Generate Para config with my API key"` | `generate_migration_config` | Production-ready configuration |
+| `"Create migration guide for my project"` | `create_migration_guide` | Step-by-step migration plan |
+
+### **🚀 Quick Test Commands**
+
+```bash
+# Test 1: Basic functionality
+"Generate a Para configuration with API key test_key_123"
+
+# Test 2: Project analysis  
+"Analyze the current directory for wallet provider usage"
+
+# Test 3: Migration validation
+"Check this project for Para migration compatibility"
 ```
 
 ---
@@ -371,7 +469,60 @@ src/
 
 ### **Common Issues & Solutions**
 
-#### **"Atomic migration failed"**
+#### **🔍 Claude Code MCP Issues**
+
+**"para-migration not showing in /mcp list"**
+```bash
+# Verify installation:
+ls -la ~/.claude.json | grep -A 5 para-migration
+
+# If missing, re-run installation:
+python3 -c "
+import json
+with open('/home/$(whoami)/.claude.json', 'r') as f:
+    data = json.load(f)
+data['mcpServers']['para-migration'] = {
+    'command': 'node',
+    'args': ['$(pwd)/dist/index.js']
+}
+with open('/home/$(whoami)/.claude.json', 'w') as f:
+    json.dump(data, f, indent=2)
+"
+
+# Then restart Claude Code
+```
+
+**"para-migration ✘ failed in /mcp list"**
+```bash
+# Check if build files exist:
+ls -la dist/index.js
+
+# If missing, rebuild:
+npm run build
+
+# Check Node.js version:
+node --version  # Should be 18+
+
+# Test MCP server directly:
+node dist/index.js --test
+```
+
+**"MCP tools not working in Claude Code"**
+```bash
+# Verify MCP connection:
+/mcp list
+
+# Should show: para-migration ✔ connected
+
+# Test with simple command:
+"Generate Para config with API key test123"
+
+# If no response, restart Claude Code
+```
+
+#### **🚀 Migration-Specific Issues**
+
+**"Atomic migration failed"**
 ```bash
 # Check rollback status:
 "Use validate_migration_state to see what was rolled back"
@@ -382,7 +533,7 @@ src/
 3. Invalid project structure
 ```
 
-#### **"Para modal not appearing"**
+**"Para modal not appearing"**
 ```bash
 # Instant fix:
 "Use validate_para_migration to check for critical issues"
@@ -393,7 +544,7 @@ src/
 3. Wrong entry point configuration
 ```
 
-#### **"Migration percentage stuck at X%"**
+**"Migration percentage stuck at X%"**
 ```bash
 # Detailed analysis:
 "Use validate_migration_state to see completion breakdown"
